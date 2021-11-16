@@ -453,6 +453,7 @@ exports.get = function(props = {}) {
       submenu: [
         {
           label: i18n.t('menu.engines', 'Show &Engines Sidebar'),
+          accelerator: 'Alt+Shift+E',
           type: 'checkbox',
           checked: !!showLeftSidebar,
           click: () => {
@@ -465,7 +466,7 @@ exports.get = function(props = {}) {
         {type: 'separator'},
         {
           label: i18n.t('menu.engines', 'Toggle &Analysis'),
-          accelerator: 'F4',
+          accelerator: 'Alt+A',
           click: () => {
             let syncerId =
               sabaki.lastAnalyzingEngineSyncerId ||
