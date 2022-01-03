@@ -221,6 +221,7 @@ export default class Goban extends Component {
       analysis,
       analysisType,
       showAnalysis,
+      scoreLeadType,
       highlightVertices = [],
       dimmedStones = [],
 
@@ -435,16 +436,20 @@ export default class Goban extends Component {
 
     if (drawHeatMap && showAnalysis) {
       let variations
+      let currentScoreLead
 
       if (analysis != null) {
         variations = analysis.variations
+        currentScoreLead = analysis.scoreLead
       } else {
         variations = []
+        currentScoreLead = -Infinity
         for (const v in board.childrenInfo) {
           const [x, y] = v.split(',').map(x => +x)
           const {visits, winrate, scoreLead} = board.childrenInfo[v]
           if (isFinite(visits) && isFinite(winrate)) {
             variations.push({vertex: [x, y], visits, winrate, scoreLead})
+            currentScoreLead = Math.max(currentScoreLead, scoreLead)
           }
         }
       }
@@ -465,6 +470,9 @@ export default class Goban extends Component {
 
           winrate =
             strength <= 3 ? Math.floor(winrate) : Math.floor(winrate * 10) / 10
+          if (scoreLead !== null && scoreLeadType === 'change') {
+            scoreLead -= currentScoreLead
+          }
           scoreLead = scoreLead == null ? null : Math.round(scoreLead * 10) / 10
           if (scoreLead === 0) scoreLead = 0 // Avoid -0
 
