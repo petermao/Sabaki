@@ -91,10 +91,12 @@ export default class MainView extends Component {
 
       highlightVertices,
       analysisType,
+      scoreLeadType,
       showAnalysis,
       showCoordinates,
       showMoveColorization,
       showMoveNumbers,
+      moveNumbersType,
       showNextMoves,
       showSiblings,
       fuzzyStonePlacement,
@@ -138,12 +140,14 @@ export default class MainView extends Component {
           highlightVertices:
             findVertex && mode === 'find' ? [findVertex] : highlightVertices,
           analysisType,
+          scoreLeadType,
           analysis:
             showAnalysis &&
             analysisTreePosition != null &&
             analysisTreePosition === treePosition
               ? analysis
               : null,
+          showAnalysis,
           paintMap,
           dimmedStones: ['scoring', 'estimator'].includes(mode)
             ? deadStones
@@ -153,6 +157,7 @@ export default class MainView extends Component {
           showCoordinates,
           showMoveColorization,
           showMoveNumbers: mode !== 'edit' && showMoveNumbers,
+          moveNumbersType,
           showNextMoves: mode !== 'guess' && showNextMoves,
           showSiblings: mode !== 'guess' && showSiblings,
           fuzzyStonePlacement,

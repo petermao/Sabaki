@@ -220,6 +220,8 @@ export default class Goban extends Component {
       paintMap = [],
       analysis,
       analysisType,
+      showAnalysis,
+      scoreLeadType,
       highlightVertices = [],
       dimmedStones = [],
 
@@ -227,6 +229,7 @@ export default class Goban extends Component {
       showCoordinates = false,
       showMoveColorization = true,
       showMoveNumbers = false,
+      moveNumbersType,
       showNextMoves = true,
       showSiblings = true,
       fuzzyStonePlacement = true,
@@ -357,9 +360,31 @@ export default class Goban extends Component {
     if (showMoveNumbers) {
       markerMap = markerMap.map(row => row.map(_ => null))
 
-      let history = [
-        ...gameTree.listNodesVertically(treePosition, -1, {})
-      ].reverse()
+      let variation = false
+      let hotspot = false
+      let history = [gameTree.get(treePosition)]
+      for (const node of gameTree.listNodesVertically(treePosition, -1, {})) {
+        if (node.id === treePosition) continue // already added
+        if (node.parentId == null) break // omit root node
+        if (moveNumbersType === 'variation' && node.children.length > 1) {
+          variation = true
+          break
+        }
+        if (moveNumbersType === 'hotspot' && node.data.HO != null) {
+          hotspot = true
+          break
+        }
+        history.push(node)
+      }
+      if (
+        (moveNumbersType === 'variation' &&
+          gameTree.onMainLine(treePosition)) ||
+        (moveNumbersType === 'variation' && !variation) ||
+        (moveNumbersType === 'hotspot' && !hotspot)
+      ) {
+        history = []
+      }
+      history.reverse()
 
       for (let i = 0; i < history.length; i++) {
         let node = history[i]
@@ -371,7 +396,7 @@ export default class Goban extends Component {
         let [x, y] = vertex
 
         if (markerMap[y] != null && x < markerMap[y].length) {
-          markerMap[y][x] = {type: 'label', label: i.toString()}
+          markerMap[y][x] = {type: 'label', label: (i + 1).toString()}
         }
       }
     }
@@ -409,41 +434,66 @@ export default class Goban extends Component {
 
     let heatMap = []
 
-    if (drawHeatMap && analysis != null) {
-      let maxVisitsWin = Math.max(
-        ...analysis.variations.map(x => x.visits * x.winrate)
-      )
-      heatMap = board.signMap.map(row => row.map(_ => null))
+    if (drawHeatMap && showAnalysis) {
+      let variations
+      let currentScoreLead
 
-      for (let {
-        vertex: [x, y],
-        visits,
-        winrate,
-        scoreLead
-      } of analysis.variations) {
-        let strength = Math.round((visits * winrate * 8) / maxVisitsWin) + 1
+      if (analysis != null) {
+        variations = analysis.variations
+        currentScoreLead = analysis.scoreLead
+      } else {
+        variations = []
+        currentScoreLead = -Infinity
+        for (const v in board.childrenInfo) {
+          const [x, y] = v.split(',').map(x => +x)
+          const {visits, winrate, scoreLead} = board.childrenInfo[v]
+          if (isFinite(visits) && isFinite(winrate)) {
+            variations.push({vertex: [x, y], visits, winrate, scoreLead})
+            currentScoreLead = Math.max(currentScoreLead, scoreLead)
+          }
+        }
+      }
 
-        winrate =
-          strength <= 3 ? Math.floor(winrate) : Math.floor(winrate * 10) / 10
-        scoreLead = scoreLead == null ? null : Math.round(scoreLead * 10) / 10
-        if (scoreLead === 0) scoreLead = 0 // Avoid -0
+      if (variations.length) {
+        let maxVisitsWin = Math.max(
+          ...variations.map(x => x.visits * x.winrate)
+        )
+        heatMap = board.signMap.map(row => row.map(_ => null))
 
-        heatMap[y][x] = {
-          strength,
-          text:
-            visits < 10
-              ? ''
-              : [
-                  analysisType === 'winrate'
-                    ? i18n.formatNumber(winrate) +
-                      (Math.floor(winrate) === winrate ? '%' : '')
-                    : analysisType === 'scoreLead' && scoreLead != null
-                    ? (scoreLead >= 0 ? '+' : '') + i18n.formatNumber(scoreLead)
-                    : '–',
-                  visits < 1000
-                    ? i18n.formatNumber(visits)
-                    : i18n.formatNumber(Math.round(visits / 100) / 10) + 'k'
-                ].join('\n')
+        for (let {
+          vertex: [x, y],
+          visits,
+          winrate,
+          scoreLead
+        } of variations) {
+          let strength = Math.round((visits * winrate * 8) / maxVisitsWin) + 1
+
+          winrate =
+            strength <= 3 ? Math.floor(winrate) : Math.floor(winrate * 10) / 10
+          if (scoreLead !== null && scoreLeadType === 'change') {
+            scoreLead -= currentScoreLead
+          }
+          scoreLead = scoreLead == null ? null : Math.round(scoreLead * 10) / 10
+          if (scoreLead === 0) scoreLead = 0 // Avoid -0
+
+          heatMap[y][x] = {
+            strength,
+            text:
+              visits < 10
+                ? ''
+                : [
+                    analysisType === 'winrate'
+                      ? i18n.formatNumber(winrate) +
+                        (Math.floor(winrate) === winrate ? '%' : '')
+                      : analysisType === 'scoreLead' && scoreLead != null
+                      ? (scoreLead >= 0 ? '+' : '') +
+                        i18n.formatNumber(scoreLead)
+                      : '–',
+                    visits < 1000
+                      ? i18n.formatNumber(visits)
+                      : i18n.formatNumber(Math.round(visits / 100) / 10) + 'k'
+                  ].join('\n')
+          }
         }
       }
     }

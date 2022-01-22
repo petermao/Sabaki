@@ -59,11 +59,13 @@ class Sabaki extends EventEmitter {
       highlightVertices: [],
       playVariation: null,
       analysisType: null,
+      scoreLeadType: null,
       coordinatesType: null,
       showAnalysis: null,
       showCoordinates: null,
       showMoveColorization: null,
       showMoveNumbers: null,
+      moveNumbersType: null,
       showNextMoves: null,
       showSiblings: null,
       fuzzyStonePlacement: null,
@@ -196,7 +198,20 @@ class Sabaki extends EventEmitter {
       get winrateData() {
         return [
           ...this.gameTree.listCurrentNodes(state.gameCurrents[state.gameIndex])
-        ].map(x => x.data.SBKV && x.data.SBKV[0])
+        ].map(
+          x =>
+            (x.data.SBKV && x.data.SBKV[0]) ||
+            (x.data.WINRATE && Math.round(x.data.WINRATE[0] * 10000) / 100)
+        )
+      },
+      get scoreLeadData() {
+        return [
+          ...this.gameTree.listCurrentNodes(state.gameCurrents[state.gameIndex])
+        ].map(
+          x =>
+            (x.data.SBKS && +x.data.SBKS[0]) ||
+            (x.data.SCORELEAD && Math.round(+x.data.SCORELEAD[0] * 100) / 100)
+        )
       }
     }
   }
@@ -209,11 +224,13 @@ class Sabaki extends EventEmitter {
     let data = {
       'app.zoom_factor': 'zoomFactor',
       'board.analysis_type': 'analysisType',
+      'board.scorelead_type': 'scoreLeadType',
       'board.show_analysis': 'showAnalysis',
       'view.show_menubar': 'showMenuBar',
       'view.show_coordinates': 'showCoordinates',
       'view.show_move_colorization': 'showMoveColorization',
       'view.show_move_numbers': 'showMoveNumbers',
+      'view.move_numbers_type': 'moveNumbersType',
       'view.show_next_moves': 'showNextMoves',
       'view.show_siblings': 'showSiblings',
       'view.coordinates_type': 'coordinatesType',
@@ -882,14 +899,18 @@ class Sabaki extends EventEmitter {
               Math.round(
                 (sign > 0 ? variation.winrate : 100 - variation.winrate) * 100
               ) / 100
-
+            let startNodeProperties = {
+              [annotationProp]: [annotationValues[annotationProp]],
+              SBKV: [winrate.toString()]
+            }
+            if (variation.scoreLead != null) {
+              let scoreLead = Math.round(sign * variation.scoreLead * 100) / 100
+              startNodeProperties.SBKS = [scoreLead.toString()]
+            }
             this.openVariationMenu(sign, variation.moves, {
               x,
               y,
-              startNodeProperties: {
-                [annotationProp]: [annotationValues[annotationProp]],
-                SBKV: [winrate.toString()]
-              }
+              startNodeProperties
             })
           }
         }
@@ -1739,13 +1760,21 @@ class Sabaki extends EventEmitter {
 
           if (syncer.analysis != null && syncer.treePosition != null) {
             let tree = this.state.gameTrees[this.state.gameIndex]
-            let {sign, winrate} = syncer.analysis
-            if (sign < 0) winrate = 100 - winrate
+            let {sign, winrate, scoreLead} = syncer.analysis
+            if (sign < 0) {
+              winrate = 100 - winrate
+              scoreLead = -scoreLead
+            }
 
             let newTree = tree.mutate(draft => {
               draft.updateProperty(syncer.treePosition, 'SBKV', [
                 (Math.round(winrate * 100) / 100).toString()
               ])
+              if (isFinite(scoreLead)) {
+                draft.updateProperty(syncer.treePosition, 'SBKS', [
+                  (Math.round(scoreLead * 100) / 100).toString()
+                ])
+              }
             })
 
             this.setCurrentTreePosition(newTree, this.state.treePosition)

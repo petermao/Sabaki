@@ -25,10 +25,12 @@ exports.get = function(props = {}) {
     disableAll,
     disableGameLoading,
     analysisType,
+    scoreLeadType,
     showAnalysis,
     showCoordinates,
     coordinatesType,
     showMoveNumbers,
+    moveNumbersType,
     showMoveColorization,
     showNextMoves,
     showSiblings,
@@ -573,6 +575,71 @@ exports.get = function(props = {}) {
           click: () =>
             sabaki.setState(({fullScreen}) => ({fullScreen: !fullScreen}))
         },
+        {
+          label: i18n.t('menu.view', 'Analysis Metric'),
+          submenu: [
+            {
+              label: i18n.t('menu.view', '&Win Rate'),
+              type: 'checkbox',
+              checked: analysisType === 'winrate',
+              accelerator: 'CmdOrCtrl+Shift+H',
+              click: () => {
+                setting.set(
+                  'board.analysis_type',
+                  setting.get('board.analysis_type') === 'winrate'
+                    ? 'scoreLead'
+                    : 'winrate'
+                )
+              }
+            },
+            {
+              label: i18n.t('menu.view', '&Score Lead'),
+              type: 'checkbox',
+              checked: analysisType === 'scoreLead',
+              accelerator: 'CmdOrCtrl+Shift+H',
+              click: () => {
+                setting.set(
+                  'board.analysis_type',
+                  setting.get('board.analysis_type') === 'scoreLead'
+                    ? 'winrate'
+                    : 'scoreLead'
+                )
+              }
+            }
+          ]
+        },
+        {
+          label: i18n.t('menu.view', 'Score Lead Display'),
+          submenu: [
+            {
+              label: i18n.t('menu.view', '&Absolute'),
+              type: 'checkbox',
+              checked: scoreLeadType === 'absolute',
+              click: () => {
+                setting.set(
+                  'board.scorelead_type',
+                  setting.get('board.scorelead_type') === 'absolute'
+                    ? 'change'
+                    : 'absolute'
+                )
+              }
+            },
+            {
+              label: i18n.t('menu.view', '&Change'),
+              type: 'checkbox',
+              checked: scoreLeadType === 'change',
+              click: () => {
+                setting.set(
+                  'board.scorelead_type',
+                  setting.get('board.scorelead_type') === 'change'
+                    ? 'absolute'
+                    : 'change'
+                )
+              }
+            }
+          ]
+        },
+
         {type: 'separator'},
         {
           label: i18n.t('menu.view', 'Show &Coordinates'),
@@ -616,9 +683,42 @@ exports.get = function(props = {}) {
         },
         {
           label: i18n.t('menu.view', 'Show Move N&umbers'),
-          type: 'checkbox',
-          checked: !!showMoveNumbers,
-          click: () => toggleSetting('view.show_move_numbers')
+          submenu: [
+            {
+              label: i18n.t('menu.view', '&Don’t Show'),
+              type: 'checkbox',
+              checked: !showMoveNumbers,
+              click: () => toggleSetting('view.show_move_numbers')
+            },
+            {type: 'separator'},
+            {
+              label: i18n.t('menu.view', 'From Game Start'),
+              type: 'checkbox',
+              checked: !!showMoveNumbers && moveNumbersType === 'start',
+              click: () => {
+                setting.set('view.show_move_numbers', true)
+                setting.set('view.move_numbers_type', 'start')
+              }
+            },
+            {
+              label: i18n.t('menu.view', 'From Variation Start'),
+              type: 'checkbox',
+              checked: !!showMoveNumbers && moveNumbersType === 'variation',
+              click: () => {
+                setting.set('view.show_move_numbers', true)
+                setting.set('view.move_numbers_type', 'variation')
+              }
+            },
+            {
+              label: i18n.t('menu.view', 'From Hotspot'),
+              type: 'checkbox',
+              checked: !!showMoveNumbers && moveNumbersType === 'hotspot',
+              click: () => {
+                setting.set('view.show_move_numbers', true)
+                setting.set('view.move_numbers_type', 'hotspot')
+              }
+            }
+          ]
         },
         {
           label: i18n.t('menu.view', 'Show Move Colori&zation'),
@@ -640,50 +740,14 @@ exports.get = function(props = {}) {
         },
         {
           label: i18n.t('menu.view', 'Show &Heatmap'),
-          submenu: [
-            {
-              label: i18n.t('menu.view', '&Don’t Show'),
-              type: 'checkbox',
-              checked: !showAnalysis,
-              accelerator: 'CmdOrCtrl+H',
-              click: () => toggleSetting('board.show_analysis')
-            },
-            {type: 'separator'},
-            {
-              label: i18n.t('menu.view', 'Show &Win Rate'),
-              type: 'checkbox',
-              checked: !!showAnalysis && analysisType === 'winrate',
-              accelerator: 'CmdOrCtrl+Shift+H',
-              click: () => {
-                setting.set('board.show_analysis', true)
-                setting.set(
-                  'board.analysis_type',
-                  setting.get('board.analysis_type') === 'winrate'
-                    ? 'scoreLead'
-                    : 'winrate'
-                )
-              }
-            },
-            {
-              label: i18n.t('menu.view', 'Show &Score Lead'),
-              type: 'checkbox',
-              checked: !!showAnalysis && analysisType === 'scoreLead',
-              accelerator: 'CmdOrCtrl+Shift+H',
-              click: () => {
-                setting.set('board.show_analysis', true)
-                setting.set(
-                  'board.analysis_type',
-                  setting.get('board.analysis_type') === 'scoreLead'
-                    ? 'winrate'
-                    : 'scoreLead'
-                )
-              }
-            }
-          ]
+          type: 'checkbox',
+          checked: !!showAnalysis,
+          accelerator: 'CmdOrCtrl+H',
+          click: () => toggleSetting('board.show_analysis')
         },
         {type: 'separator'},
         {
-          label: i18n.t('menu.view', 'Show &Winrate Graph'),
+          label: i18n.t('menu.view', 'Show &Analysis Graph'),
           type: 'checkbox',
           checked: !!showWinrateGraph,
           enabled: !!showGameGraph || !!showCommentBox,
