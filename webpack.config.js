@@ -8,7 +8,7 @@ module.exports = (env, argv) => ({
     path: __dirname
   },
 
-  devtool: argv.mode === 'production' ? false : 'cheap-module-eval-source-map',
+  devtool: argv.mode === 'production' ? false : 'eval-cheap-module-source-map',
   target: 'electron-renderer',
 
   node: {
@@ -17,15 +17,10 @@ module.exports = (env, argv) => ({
 
   resolve: {
     alias: {
-      react:
-        argv.mode === 'production'
-          ? path.join(__dirname, 'node_modules/preact/dist/preact.min.js')
-          : 'preact',
-      preact:
-        argv.mode === 'production'
-          ? path.join(__dirname, 'node_modules/preact/dist/preact.min.js')
-          : 'preact',
-      'prop-types': path.join(__dirname, 'src/modules/shims/prop-types.js')
+      react: 'preact/compat',
+      'react-dom/test-utils': 'preact/test-utils',
+      'react-dom': 'preact/compat',
+      'react/jsx-runtime': 'preact/jsx-runtime'
     }
   },
 
