@@ -25,7 +25,7 @@ exports.get = function(props = {}) {
     disableAll,
     disableGameLoading,
     analysisType,
-    scoreLeadType,
+    analysisValueType,
     showAnalysis,
     showCoordinates,
     coordinatesType,
@@ -609,16 +609,16 @@ exports.get = function(props = {}) {
           ]
         },
         {
-          label: i18n.t('menu.view', 'Score Lead Display'),
+          label: i18n.t('menu.view', 'Analysis Value Display'),
           submenu: [
             {
               label: i18n.t('menu.view', '&Absolute'),
               type: 'checkbox',
-              checked: scoreLeadType === 'absolute',
+              checked: analysisValueType === 'absolute',
               click: () => {
                 setting.set(
-                  'board.scorelead_type',
-                  setting.get('board.scorelead_type') === 'absolute'
+                  'board.analysis_value_type',
+                  setting.get('board.analysis_value_type') === 'absolute'
                     ? 'change'
                     : 'absolute'
                 )
@@ -627,11 +627,11 @@ exports.get = function(props = {}) {
             {
               label: i18n.t('menu.view', '&Change'),
               type: 'checkbox',
-              checked: scoreLeadType === 'change',
+              checked: analysisValueType === 'change',
               click: () => {
                 setting.set(
-                  'board.scorelead_type',
-                  setting.get('board.scorelead_type') === 'change'
+                  'board.analysis_value_type',
+                  setting.get('board.analysis_value_type') === 'change'
                     ? 'absolute'
                     : 'change'
                 )
